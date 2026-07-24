@@ -6,19 +6,19 @@
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Malgun Gothic', sans-serif; background: #1a1a1a; }
         #game-container { width: 100vw; height: 100vh; background-size: cover; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: background 0.5s; }
-        #ui-layer { background: rgba(255,255,255,0.9); padding: 30px; border-radius: 20px; color: #333; text-align: center; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        #ui-layer { background: rgba(255,255,255,0.9); padding: 30px; border-radius: 20px; color: #333; text-align: center; max-width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); display: block; }
         input { padding: 12px; font-size: 1.5em; width: 150px; text-align: center; margin-bottom: 15px; border: 2px solid #ccc; border-radius: 8px; }
         button { padding: 10px 20px; font-size: 1em; cursor: pointer; margin: 5px; border-radius: 8px; border: none; background: #4a90e2; color: white; transition: 0.3s; }
         button:hover { background: #357abd; }
         #timer { font-size: 2em; color: #d0021b; font-weight: bold; margin-bottom: 15px; }
         #hint-box { margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px; }
-        #final-message { font-size: 3.5em; color: #f5a623; font-weight: bold; display: none; text-shadow: 2px 2px 10px #000; }
+        #final-message { font-size: 2em; color: #f5a623; font-weight: bold; display: none; text-shadow: 2px 2px 10px #000; text-align: center; background: rgba(0,0,0,0.7); padding: 40px; border-radius: 20px; }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="ui-layer">
-            <div id="timer">남은 시간: 60초</div>
+            <div id="timer">남은 시간: 30초</div>
             <h1 id="stage-title">1단계</h1>
             <p id="puzzle-desc" style="font-size: 1.2em; line-height: 1.6;"></p>
             <input type="password" id="password" placeholder="비밀번호 4자리" maxlength="4" autofocus>
@@ -32,11 +32,22 @@
             </div>
             <p id="message" style="color:red; font-weight:bold;"></p>
         </div>
-        <div id="final-message">축하합니다!</div>
+        <div id="final-message">
+            <div>축하합니다. 모든 방 탈출 성공!</div>
+            <button onclick="location.reload()" style="margin-top: 20px; font-size: 1.2em;">다시하기</button>
+            <button onclick="closeGame()" style="margin-top: 20px; font-size: 1.2em;">종료</button>
+        </div>
     </div>
     <script>
+        // 보조 함수: 창 닫기 시도
+        function closeGame() {
+            window.open('', '_self', '');
+            window.close();
+        }
+    </script>
+    <script>
         let currentStage = 0;
-        let timeLeft = 60;
+        let timeLeft = 30;
         let timerInterval;
 
         const stages = [
@@ -54,7 +65,7 @@
         });
 
         function startTimer() {
-            timeLeft = 60;
+            timeLeft = 30;
             clearInterval(timerInterval);
             timerInterval = setInterval(() => {
                 timeLeft--;
@@ -84,13 +95,31 @@
             const input = inputField.value;
             if (input === stages[currentStage].answer) {
                 if (currentStage < stages.length - 1) {
-                    alert('축하합니다. 다음 단계로 넘어갑니다.');
-                    currentStage++;
-                    updateUI();
+                    // 중간 단계용 메시지 표시
+                    const msgDiv = document.getElementById('final-message');
+                    msgDiv.innerHTML = '<div>축하합니다! 다음 단계로 넘어갑니다.</div>';
+                    msgDiv.style.fontSize = '2em';
+                    msgDiv.style.background = 'rgba(0,0,0,0.7)';
+                    msgDiv.style.display = 'block';
+                    document.getElementById('ui-layer').style.display = 'none';
+                    setTimeout(() => {
+                        msgDiv.style.display = 'none';
+                        document.getElementById('ui-layer').style.display = 'block';
+                        currentStage++;
+                        updateUI();
+                    }, 1000); // 1초 후 전환, updateUI() 내에서 startTimer() 호출됨
                 } else {
                     clearInterval(timerInterval);
+                    const msgDiv = document.getElementById('final-message');
+                    msgDiv.innerHTML = `
+                        <div>축하합니다. 모든 방 탈출 성공!</div>
+                        <button onclick="location.reload()" style="margin-top: 15px; font-size: 0.8em; padding: 5px 10px;">다시하기</button>
+                        <button onclick="closeGame()" style="margin-top: 15px; font-size: 0.8em; padding: 5px 10px;">종료</button>
+                    `;
+                    msgDiv.style.fontSize = '2em';
+                    msgDiv.style.background = 'rgba(0,0,0,0.7)';
+                    msgDiv.style.display = 'block';
                     document.getElementById('ui-layer').style.display = 'none';
-                    document.getElementById('final-message').style.display = 'block';
                 }
             } else {
                 document.getElementById('message').innerText = '비밀번호가 틀렸습니다.';
